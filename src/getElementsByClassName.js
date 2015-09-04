@@ -9,23 +9,37 @@
 
 var getElementsByClassName = function(className) {
   var nodeList = [];
+  var nodeListLength = 0;
 
   var classes = className.split(' ');
   classLen = classes.length;
 
   var hasClasses = function (node) {
-    for(var i = 0; i < classLen; i++) {
-      if(!node.classList.contains(classes[i])) {
-        return false;
+    var cl = node.classList;
+    clLen = cl.length;
+    if(clLen >= classLen) {
+      for(var i = 0; i < classLen; i++) {
+        var classInList = false;
+        for(var j = 0; j < clLen; j++) {
+          if(classes[i] === cl[j]) {
+            classInList = true;
+          }
+        }
+        if(!classInList) {
+          return false;
+        }
       }
+      return true;
+    } else {
+      return false;
     }
-    return true;
   };
 
   var gebcn = function (node) {
     if(node.nodeType === 1) {
       if(hasClasses(node)) {
-        nodeList.push(node);
+        nodeList[nodeListLength]= node;
+        nodeListLength++;
       }
       var children = node.childNodes;
       var childrenLen = children.length;
@@ -36,8 +50,8 @@ var getElementsByClassName = function(className) {
     }
   };
 
-  gebcn(document.body)
+  gebcn(document.body);
 
-  return nodeList
+  return nodeList;
 
 };
