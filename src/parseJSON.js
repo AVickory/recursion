@@ -114,46 +114,71 @@ var parseJSON = function(json) {
     var sign = 1;
     var hasDecimal = false;
     var digitTypes = {whole: 0, decimal: 0}
+    var start = 0;
 
-    if(subJson[i] === '-') {
+    if(subJson[0] === '-') {
       sign = -1;
+      start = 1;
     }
 
-    checkFail((subJson[i] === '0' && subJson[i+1] === '.') || subJson[i] !== '0');
+    checkFail((subJson[start] === '0' && (subJson[start+1] === '.' || subJson.length === 1)) || subJson[0] !== '0');
     if (failed) { return undefined }
 
-    for(var i = (sign === 1 ? 0 : 1); i < subJson.length; i++) {
+    if(subJson[start] === '0') {
+      if(subJson[start+1] === '.') {
+        hasDecimal = true;
+        start += 2;
+      } else {
+        return 0;
+      }
+    }
+
+    for(var i = start; i < subJson.length; i++) {
       if(subJson[i] === '.') {
         checkFail(!hasDecimal);
-        if (failed) { return undefined }
+        if (failed) { return undefined; }
         hasDecimal = true;
       } else {
         d = digits.indexOf(subJson[i]);
         checkFail(d !== -1);
-        checkFail()
-        
-        if (failed) { return undefined }
+        if (failed) { return undefined; }
         digitArr.push(d);
         hasDecimal ? digitTypes.decimal++ : digitTypes.whole++;
       }
-      i++;
     }
 
-    var dLen = digitArr.length;
-    var factor;
-    var result;
-    if(digitTypes.whole > 0) {
-      factor = Math.pow(10, digitTypes.whole-1);
+    var leadingZeros = 0;
+    if(digitTypes.whole === 0) {
+      while(digitArr[0] === 0) {
+        leadingZeros++;
+        digitArr.shift();
+      }
+    }
+
+
+    var wholeRes = 0;
+    var wholeAdjust = 0;
+    var fractionalRes = 0;
+
+    for(var w = 0; w < digitTypes.whole; w++) {
+      wholeRes = wholeRes * 10 + digitArr[w];
+    }
+
+    for(var f = 0; f < digitTypes.decimal - leadingZeros; f++) {
+      if(f < 15) {
+        fractionalRes = fractionalRes * 10 + digitArr[digitTypes.whole + f];
+      } else {
+        fractionalRes = fractionalRes + digitArr[digitTypes.whole + f] * Math.pow(10, 14-f);
+        digitTypes.decimal--;
+      }
+    }
+    if(digitTypes.whole ===0) {
+      return sign * (fractionalRes / Math.pow(10, (digitTypes.decimal-1)));
+    } else if(digitTypes.decimal === 0) {
+      return sign * wholeRes;
     } else {
-      factor = 0.1;
+      return sign*(wholeRes + (fractionalRes / Math.pow(10, (digitTypes.decimal-1))));
     }
-
-    for(var j = 0; j < dLen; j++) {
-      result += digitArr[j] * factor;
-      factor /= 10;
-    }
-
-    return result;
   };
 
   var parseJ = function () {
@@ -183,7 +208,7 @@ var parseJSON = function(json) {
       } else if(firstChar === '-' || digits.indexOf(firstChar) !== -1) {
         return parseNumber(subJson);
       } else {
-        checkFail(true);
+        failed = true;
         return undefined;
       }
 
