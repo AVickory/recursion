@@ -13,7 +13,7 @@ var parseJSON = function(json) {
   };
 
   var skipSpaces = function () {
-    while(json[index] === ' ' && index < jLen) {
+    while((json[index] === ' ' || json[index] === '\n' || json[index] === '\t' || json[index] === '\r') && index <= jLen) {
       index++;
     }
   };
@@ -92,7 +92,6 @@ var parseJSON = function(json) {
     index++;
     while((json[index] !== '\"')&& index < jLen) {
       if(json[index] === '\\') {
-        str+= json[index];
         index++;
       }
       str += json[index];
@@ -109,76 +108,7 @@ var parseJSON = function(json) {
     //attempts to create a number from a string.  Does not guarantee accuracy, and may overflow.
     //I may come back and figure out how to validate bounds before conversion, but that seems like an
     //entirely separate class of problem from the one at hand.
-    var digitArr = [];
-    var d = -1;
-    var sign = 1;
-    var hasDecimal = false;
-    var digitTypes = {whole: 0, decimal: 0}
-    var start = 0;
-
-    if(subJson[0] === '-') {
-      sign = -1;
-      start = 1;
-    }
-
-    checkFail((subJson[start] === '0' && (subJson[start+1] === '.' || subJson.length === 1)) || subJson[0] !== '0');
-    if (failed) { return undefined }
-
-    if(subJson[start] === '0') {
-      if(subJson[start+1] === '.') {
-        hasDecimal = true;
-        start += 2;
-      } else {
-        return 0;
-      }
-    }
-
-    for(var i = start; i < subJson.length; i++) {
-      if(subJson[i] === '.') {
-        checkFail(!hasDecimal);
-        if (failed) { return undefined; }
-        hasDecimal = true;
-      } else {
-        d = digits.indexOf(subJson[i]);
-        checkFail(d !== -1);
-        if (failed) { return undefined; }
-        digitArr.push(d);
-        hasDecimal ? digitTypes.decimal++ : digitTypes.whole++;
-      }
-    }
-
-    var leadingZeros = 0;
-    if(digitTypes.whole === 0) {
-      while(digitArr[0] === 0) {
-        leadingZeros++;
-        digitArr.shift();
-      }
-    }
-
-
-    var wholeRes = 0;
-    var wholeAdjust = 0;
-    var fractionalRes = 0;
-
-    for(var w = 0; w < digitTypes.whole; w++) {
-      wholeRes = wholeRes * 10 + digitArr[w];
-    }
-
-    for(var f = 0; f < digitTypes.decimal - leadingZeros; f++) {
-      if(f < 15) {
-        fractionalRes = fractionalRes * 10 + digitArr[digitTypes.whole + f];
-      } else {
-        fractionalRes = fractionalRes + digitArr[digitTypes.whole + f] * Math.pow(10, 14-f);
-        digitTypes.decimal--;
-      }
-    }
-    if(digitTypes.whole ===0) {
-      return sign * (fractionalRes / Math.pow(10, (digitTypes.decimal-1)));
-    } else if(digitTypes.decimal === 0) {
-      return sign * wholeRes;
-    } else {
-      return sign*(wholeRes + (fractionalRes / Math.pow(10, (digitTypes.decimal-1))));
-    }
+    return Number(subJson);
   };
 
   var parseJ = function () {
