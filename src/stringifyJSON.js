@@ -13,19 +13,23 @@ var stringifyJSON = function(obj) {
     objType = 'array';
   }
   switch(objType) {
+
     case 'undefined':
     case 'function':
     case 'symbol':
       return '';
       break;
+
     case 'number':
     case 'boolean':
     case 'null':
       string += obj;
       break;
+
     case 'string':
       string += '\"' + obj + '\"';
       break;
+
     case 'array':
       string += '[';
       var subString;
@@ -44,6 +48,7 @@ var stringifyJSON = function(obj) {
       }
       string += ']';
       break;
+
     default:
       string += '{';
       var len = obj.length;
@@ -64,6 +69,8 @@ var stringifyJSON = function(obj) {
         }
       }
       string += '}';
+
   }
+  
   return string;
 };

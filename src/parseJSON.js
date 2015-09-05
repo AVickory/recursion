@@ -36,14 +36,12 @@ var parseJSON = function(json) {
 
       property = parseStr();
 
-      checkFail(property !== undefined);
       checkFail(json[index] === ':');
       if (failed) { return undefined; }
       increment();
 
       data = parseJ();
 
-      checkFail(data !== undefined);
       checkFail(json[index] === ',' || json[index] === '}');
       if (failed) { return undefined; }
 
@@ -69,7 +67,6 @@ var parseJSON = function(json) {
 
       data = parseJ();
 
-      checkFail(data !== undefined);
       checkFail(json[index] === ',' || json[index] === ']');
       if (failed) { return undefined; }
 
@@ -108,7 +105,32 @@ var parseJSON = function(json) {
     //attempts to create a number from a string.  Does not guarantee accuracy, and may overflow.
     //I may come back and figure out how to validate bounds before conversion, but that seems like an
     //entirely separate class of problem from the one at hand.
-    return Number(subJson);
+    var start = 0;
+    var foundDecimal = false;
+    if(subJson[start] === '-') {
+      start++;
+    }
+    if(subJson[start] === '0') {
+      checkFail(subJson[start + 1] === '.' || subJson.length === 1)
+      if(failed) { return undefined; }
+      foundDecimal = true
+      start += 2;
+    }
+
+    for(var i = start; i < subJson.length; i++) {
+      checkFail(!(subJson[i] === '.' && foundDecimal));
+      if(subJson[i] === '.') {
+        foundDecimal = true;
+      } else {
+        checkFail(digits.indexOf(subJson[i]) !== -1);
+      }
+    }
+    if( failed ) { return undefined; }
+    if(foundDecimal) {
+      return parseFloat(subJson);
+    } else {
+      return parseInt(subJson);
+    }
   };
 
   var parseJ = function () {
@@ -135,6 +157,8 @@ var parseJSON = function(json) {
         return false;
       } else if(subJson === 'null') {
         return null;
+      } else if(subJson === 'NaN') {
+        return NaN;
       } else if(firstChar === '-' || digits.indexOf(firstChar) !== -1) {
         return parseNumber(subJson);
       } else {
